@@ -5,7 +5,7 @@ module Closeio
     base_uri   'https://app.close.io/api/v1'
     basic_auth ENV['CLOSEIO_API_KEY'], ''
     headers 'Content-Type' => 'application/json'
-    #debug_output $stdout
+    debug_output $stdout
     format :json
 
     extend Forwardable
@@ -44,6 +44,16 @@ module Closeio
         end
       end
 
+      def count response = nil, opts={}
+        res = response || get(resource_path, opts)
+
+        if res.success?
+          res['total_results'].nil? ? [] : res['total_results']
+        else
+          bad_response res
+        end
+      end
+
       # Closeio::Lead.create name: "Bluth Company", contacts: [{name: "Buster Bluth", emails: [{email: "cartographer@bluthcompany.com"}]}]
       def create opts={}
         res = post resource_path, body: opts.to_json
@@ -75,6 +85,16 @@ module Closeio
 
         if res.success?
           res['data'].nil? ? [] : res['data'].map{|obj| new(obj)}
+        else
+          bad_response res
+        end
+      end
+
+      def count_where opts={}
+        res = get(resource_path, query: opts)
+
+        if res.success?
+          res['total_results'].nil? ? [] : res['total_results']
         else
           bad_response res
         end
